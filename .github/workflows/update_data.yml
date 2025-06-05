@@ -3,7 +3,7 @@ name: Actualizar Datos Históricos
 on:
   schedule:
     - cron: '0 6 * * *'  # Ejecutar todos los días a las 6:00 UTC
-  workflow_dispatch:     # Permite ejecución manual desde GitHub
+  workflow_dispatch:
 
 jobs:
   update-data:
@@ -18,6 +18,14 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
@@ -25,12 +33,14 @@ jobs:
 
       - name: Ejecutar script de descarga
         run: |
-          python src/mi_proyecto/run_collector.py
+          set -e
+          python3 src/mi_proyecto/run_collector.py
 
       - name: Confirmar cambios y hacer push (si hay nuevos datos)
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add .
+          git pull --rebase
+          git add data/  # Cambia por la ruta de tus archivos modificados
           git commit -m "Actualización automática de datos históricos" || echo "Sin cambios"
-          git push
+          git push || echo "No se pudo hacer push (probablemente sin cambios)"

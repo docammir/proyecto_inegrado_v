@@ -37,12 +37,22 @@ class FinancialDataCollector:
     def run(self):
         try:
             df = self.fetch_data()
+            df = self.enrich_data(df)
             self.save_to_csv(df)
             self.save_to_db(df)
         except Exception as e:
             self.logger.error(f"Error al ejecutar el colector: {e}")
 
+    def enrich_data(self, df):
+        df["Retorno Diario"] = df["Close"].pct_change()
+        df["Media Móvil 20"] = df["Close"].rolling(window=20).mean()
+        df["Volatilidad 20"] = df["Close"].rolling(window=20).std()
+        df["Retorno Acumulado"] = (1 + df["Retorno Diario"]).cumprod()
+        df["Tasa de Variación"] = df["Close"].diff()
+
+        return df
 
 if __name__ == "__main__":
     collector = FinancialDataCollector("NASDAQ")  
     collector.run()
+

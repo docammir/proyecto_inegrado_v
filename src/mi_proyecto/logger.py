@@ -9,3 +9,5 @@ def get_logger(name="collector"):
         ch.setFormatter(formatter)
         logger.addHandler(ch)
     return logger
+
+
